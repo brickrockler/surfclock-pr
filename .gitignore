@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# PlatformIO
+firmware/.pio/
+.pio/
+.vscode/
+
+# Cloudflare / Node
+node_modules/
+.wrangler/
+cloudflare-worker/.wrangler/
+*.log
+npm-debug.log*
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Secrets & Local Env
+.env
+.env.*
