@@ -32,6 +32,9 @@ void CliHandler::printHelp() {
     Serial.println("    wifi <ssid> [pwd] : Configure & save Wi-Fi credentials");
     Serial.println("    api <url>         : Configure & save scoring API endpoint");
     Serial.println("    free              : Power down all motor coils immediately");
+    Serial.println("    pause             : Pause background network polling (for calibration)");
+    Serial.println("    resume            : Resume background network polling");
+    Serial.println("    save              : Persist current step positions to NVS flash");
     Serial.println("    help              : Show this help menu");
     Serial.println("==============================================\n");
 }
@@ -122,6 +125,20 @@ void CliHandler::processCommand(const String& line) {
     } else if (cmd == "free") {
         _stepper.freeCoils();
         _gauge.freeCoils();
+    } else if (cmd == "test_coils" || cmd == "test") {
+        _stepper.testCoilSequence();
+    } else if (cmd == "test_coils2" || cmd == "test2") {
+        _gauge.testCoilSequence();
+    } else if (cmd == "pause") {
+        _net.setPollingEnabled(false);
+        Serial.println("[CLI] ⏸ Network polling PAUSED for manual calibration.");
+    } else if (cmd == "resume") {
+        _net.setPollingEnabled(true);
+        Serial.println("[CLI] ▶ Network polling RESUMED.");
+    } else if (cmd == "save") {
+        _stepper.savePositionToNvs();
+        _gauge.savePositionToNvs();
+        Serial.println("[CLI] 💾 Hand positions persisted to NVS flash.");
     } else if (cmd == "wifi") {
         int sp = arg.indexOf(' ');
         if (sp != -1) {

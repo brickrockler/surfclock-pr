@@ -48,6 +48,8 @@ public:
 
     // Manual datum lock
     void zeroDatum();
+    void savePositionToNvs();
+    void loadPositionFromNvs();
 
 private:
     HallSensor& _hall;

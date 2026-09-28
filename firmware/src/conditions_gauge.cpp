@@ -1,3 +1,4 @@
+#include <Preferences.h>
 #include "conditions_gauge.h"
 
 ConditionsGauge::ConditionsGauge(uint8_t in1, uint8_t in2, uint8_t in3, uint8_t in4, uint8_t hallPin)
@@ -14,14 +15,37 @@ ConditionsGauge::ConditionsGauge(uint8_t in1, uint8_t in2, uint8_t in3, uint8_t 
 {}
 
 void ConditionsGauge::begin() {
+    pinMode(_in1, OUTPUT);
+    pinMode(_in2, OUTPUT);
+    pinMode(_in3, OUTPUT);
+    pinMode(_in4, OUTPUT);
     pinMode(_hallPin, INPUT_PULLUP);
     _stepper.setMaxSpeed(GAUGE_MAX_SPEED);
     _stepper.setAcceleration(GAUGE_ACCELERATION);
-    _stepper.setCurrentPosition(0);
+    loadPositionFromNvs();
     _isHomed = true;
-    _currentRating = 1.0f;
     disableCoils();
-    Serial.println("[GAUGE] Initialized. Step 0 locked as Rating 1.0 datum.");
+}
+
+void ConditionsGauge::loadPositionFromNvs() {
+    Preferences prefs;
+    prefs.begin("surf_gauge", false);
+    long savedStep = prefs.getLong("gauge_step", 0);
+    float savedRating = prefs.getFloat("gauge_rating", 1.0f);
+    prefs.end();
+
+    _stepper.setCurrentPosition(savedStep);
+    _currentRating = savedRating;
+    Serial.printf("[GAUGE] Restored from NVS: Step %ld (Rating %.1f)\n", savedStep, savedRating);
+}
+
+void ConditionsGauge::savePositionToNvs() {
+    Preferences prefs;
+    prefs.begin("surf_gauge", false);
+    prefs.putLong("gauge_step", _stepper.currentPosition());
+    prefs.putFloat("gauge_rating", _currentRating);
+    prefs.end();
+    Serial.printf("[GAUGE] Persisted to NVS: Step %ld (Rating %.1f)\n", _stepper.currentPosition(), _currentRating);
 }
 
 void ConditionsGauge::zeroDatum() {
@@ -30,7 +54,8 @@ void ConditionsGauge::zeroDatum() {
     _isHomed = true;
     _currentRating = 1.0f;
     _isSeeking = false;
-    Serial.println("[GAUGE] Current position locked as Rating 1.0 datum (Step 0)!");
+    savePositionToNvs();
+    Serial.println("[GAUGE] Current position locked as Rating 1.0 datum (Step 0) & saved to NVS!");
 }
 
 bool ConditionsGauge::isHallTriggered() const {
@@ -69,6 +94,20 @@ void ConditionsGauge::freeCoils() {
     _isSeeking = false;
     disableCoils();
     Serial.println("[GAUGE] Stepper coils powered down.");
+}
+void ConditionsGauge::testCoilSequence() {
+    Serial.println("[TEST GAUGE] Cycling ULN2003 coil outputs (11 -> 12 -> 13 -> 14)...");
+    const uint8_t pins[] = {_in1, _in2, _in3, _in4};
+    for (int p = 0; p < 4; p++) pinMode(pins[p], OUTPUT);
+    for (int cycle = 0; cycle < 3; cycle++) {
+        for (int p = 0; p < 4; p++) {
+            for (int i = 0; i < 4; i++) digitalWrite(pins[i], (i == p) ? HIGH : LOW);
+            Serial.printf("  Gauge Coil IN%d (GPIO %d) active\n", p + 1, pins[p]);
+            delay(400);
+        }
+    }
+    disableCoils();
+    Serial.println("[TEST GAUGE] Coil test complete.");
 }
 
 void ConditionsGauge::startHoming(bool clockwise) {
@@ -139,6 +178,7 @@ void ConditionsGauge::update() {
             if (_stationaryStartTime == 0) {
                 _stationaryStartTime = millis();
             } else if (millis() - _stationaryStartTime > COIL_POWERDOWN_DELAY) {
+                savePositionToNvs();
                 disableCoils();
                 _stationaryStartTime = 0;
             }

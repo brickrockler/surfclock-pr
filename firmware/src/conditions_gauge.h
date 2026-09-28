@@ -23,11 +23,14 @@ public:
     bool isHallTriggered() const;
     int readHallRaw() const;
     void zeroDatum();
+    void savePositionToNvs();
+    void loadPositionFromNvs();
 
     // Manual coil controls
     void freeCoils();
     void holdCoils();
     void moveRelative(long steps);
+    void testCoilSequence();
 
 private:
     uint8_t _in1, _in2, _in3, _in4, _hallPin;

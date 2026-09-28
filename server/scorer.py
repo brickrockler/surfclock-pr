@@ -22,6 +22,24 @@ def is_angle_in_window(angle: float, min_deg: float, max_deg: float) -> bool:
     else:
         return angle >= min_deg or angle <= max_deg
 
+def get_swell_exposure(spot_pos: int, swell_dir: float) -> float:
+    """Calculates headland sheltering and exposure multiplier for each bay."""
+    if spot_pos == 3: # Curl Curl: open swell magnet
+        if 130 <= swell_dir <= 200: return 1.15
+        if 60 <= swell_dir <= 130: return 1.05
+        return 1.0
+    elif spot_pos == 4: # Freshwater: enclosed protected cove
+        if 140 <= swell_dir <= 210: return 0.80 # S swell headland wrap penalty
+        if 75 <= swell_dir <= 115: return 0.95  # Direct East opens the bay
+        return 0.85 # NE sheltered
+    elif spot_pos == 5: # Queenscliff: sheltered bight / bombie
+        if 140 <= swell_dir <= 210: return 0.82 # South swell wrap
+        if 50 <= swell_dir <= 110: return 0.95  # E/NE swell direct
+        return 0.90
+    elif spot_pos == 1: # Long Reef: exposed reef
+        return 1.10 if 40 <= swell_dir <= 130 else 1.00
+    return 1.0 # Dee Why
+
 class SurfScorer:
     def __init__(self, spots_file: str):
         with open(spots_file, 'r') as f:
@@ -101,11 +119,15 @@ class SurfScorer:
 
     def score_spot(self, spot: Dict[str, Any], cond: Dict[str, Any]) -> Dict[str, Any]:
         """Calculate aggregate suitability score (0-100) based on physics & conditions."""
-        swell_h = cond["swell_height_m"]
+        raw_swell_h = cond["swell_height_m"]
         swell_p = cond["swell_period_s"]
         swell_d = cond["swell_direction_deg"]
         wind_spd = cond["wind_speed_kmh"]
         wind_d = cond["wind_direction_deg"]
+        
+        # Effective swell height accounting for bathymetry and headland shadowing
+        exposure = get_swell_exposure(spot["pos"], swell_d)
+        swell_h = raw_swell_h * exposure
         
         # 1. Swell Height Score (0 to 35 pts)
         min_s = spot["min_swell_m"]
@@ -120,7 +142,6 @@ class SurfScorer:
         else:
             excess = swell_h - max_s
             height_score = max(5.0, 30.0 - excess * 10.0)
-
         # 2. Swell Period Score (0 to 25 pts)
         if swell_p >= 14:
             period_score = 25.0
@@ -147,7 +168,8 @@ class SurfScorer:
         in_offshore_window = is_angle_in_window(wind_d, spot["optimal_wind_dir_min"], spot["optimal_wind_dir_max"])
         
         if wind_spd < 7.0:
-            wind_score = 22.0
+            alignment = 1.0 - (wind_diff_from_offshore / 180.0)
+            wind_score = 21.0 + 3.0 * alignment
             wind_cond_text = "Glassy / Light Air"
         elif in_offshore_window or wind_diff_from_offshore < 45:
             if wind_spd <= 20:
@@ -179,6 +201,8 @@ class SurfScorer:
         
         return {
             "score": final_score,
+            "raw_score": round(total, 2),
+            "effective_swell_h": round(swell_h, 2),
             "wind_condition": wind_cond_text,
             "sub_scores": {
                 "height": round(height_score, 1),
@@ -200,6 +224,8 @@ class SurfScorer:
             "pos": spot["pos"],
             "name": spot["name"],
             "score": scoring["score"],
+            "raw_score": scoring.get("raw_score", scoring["score"]),
+            "effective_swell_h": scoring.get("effective_swell_h", cond.get("swell_height_m", 0)),
             "wind_condition": scoring["wind_condition"],
             "conditions": cond,
             "sub_scores": scoring.get("sub_scores", {}),
@@ -220,7 +246,7 @@ class SurfScorer:
         with ThreadPoolExecutor(max_workers=8) as pool:
             results = list(pool.map(self._process_one_spot, self.spots))
 
-        ranked = sorted(results, key=lambda x: x["score"], reverse=True)
+        ranked = sorted(results, key=lambda x: x.get("raw_score", x["score"]), reverse=True)
         winner = ranked[0]
         
         payload = {

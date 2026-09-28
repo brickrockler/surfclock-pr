@@ -55,17 +55,41 @@ async function fetchSpotConditions(spot) {
   };
 }
 
+// Oceanographic swell exposure & headland bathymetry factor
+function getSwellExposure(spotPos, swellDir) {
+  if (spotPos === 3) { // Curl Curl: open swell magnet
+    if (swellDir >= 130 && swellDir <= 200) return 1.15;
+    if (swellDir >= 60 && swellDir <= 130) return 1.05;
+    return 1.0;
+  } else if (spotPos === 4) { // Freshwater: enclosed protected cove
+    if (swellDir >= 140 && swellDir <= 210) return 0.80; // S swell headland wrap penalty
+    if (swellDir >= 75 && swellDir <= 115) return 0.95;  // Direct East opens the bay
+    return 0.85; // NE sheltered
+  } else if (spotPos === 5) { // Queenscliff: sheltered bight / bombie
+    if (swellDir >= 140 && swellDir <= 210) return 0.82; // South swell wrap
+    if (swellDir >= 50 && swellDir <= 110) return 0.95;  // E/NE swell direct
+    return 0.90;
+  } else if (spotPos === 1) { // Long Reef: exposed reef
+    return (swellDir >= 40 && swellDir <= 130) ? 1.10 : 1.00;
+  }
+  return 1.0; // Dee Why
+}
+
 function scoreSpot(spot, cond) {
+  // Effective swell height accounting for bathymetry and headland shadowing
+  const exposure = getSwellExposure(spot.pos, cond.swell_d);
+  const effSwellH = cond.swell_h * exposure;
+
   // Height score (0-35)
   const idealS = (spot.min_s + spot.max_s) / 2;
   let hScore = 0;
-  if (cond.swell_h < spot.min_s) {
-    hScore = Math.max(0, 15 * (cond.swell_h / Math.max(0.1, spot.min_s)));
-  } else if (cond.swell_h <= spot.max_s) {
-    const ratio = 1.0 - Math.abs(cond.swell_h - idealS) / (spot.max_s - spot.min_s);
+  if (effSwellH < spot.min_s) {
+    hScore = Math.max(0, 15 * (effSwellH / Math.max(0.1, spot.min_s)));
+  } else if (effSwellH <= spot.max_s) {
+    const ratio = 1.0 - Math.abs(effSwellH - idealS) / (spot.max_s - spot.min_s);
     hScore = 25 + 10 * Math.max(0, ratio);
   } else {
-    hScore = Math.max(5, 30 - (cond.swell_h - spot.max_s) * 10);
+    hScore = Math.max(5, 30 - (effSwellH - spot.max_s) * 10);
   }
   
   // Period score (0-25)
@@ -91,7 +115,9 @@ function scoreSpot(spot, cond) {
   let wText = "Light";
   
   if (cond.wind_spd < 7) {
-    wScore = 22;
+    // Glassy base with subtle micro-climate offshore alignment bonus
+    const alignment = 1.0 - (windDiff / 180.0);
+    wScore = 21.0 + 3.0 * alignment;
     wText = "Glassy";
   } else if (inWindow(cond.wind_d, spot.wind_min, spot.wind_max) || windDiff < 45) {
     wScore = cond.wind_spd <= 20 ? 25 : 18;
@@ -104,8 +130,9 @@ function scoreSpot(spot, cond) {
     wText = cond.wind_spd >= 22 ? "Blown Out" : "Onshore Chop";
   }
   
-  const total = Math.max(0, Math.min(100, Math.round(hScore + pScore + dScore + wScore)));
-  return { score: total, wind_condition: wText };
+  const rawTotal = hScore + pScore + dScore + wScore;
+  const total = Math.max(0, Math.min(100, Math.round(rawTotal)));
+  return { score: total, rawScore: rawTotal, wind_condition: wText, effective_swell_h: effSwellH };
 }
 
 export default {
@@ -132,6 +159,8 @@ export default {
             dial_text: s.dial_text,
             angle: s.angle,
             score: sc.score,
+            raw_score: Math.round(sc.rawScore * 100) / 100,
+            effective_swell_h: Math.round(sc.effective_swell_h * 100) / 100,
             cond: sc.wind_condition,
             conditions: {
               swell_height_m: Math.round(c.swell_h * 100) / 100,
@@ -146,7 +175,7 @@ export default {
         }
       }));
       
-      results.sort((a, b) => b.score - a.score);
+      results.sort((a, b) => b.raw_score - a.raw_score);
       const winner = results[0];
       
       // Calculate 1 to 10 condition rating (continuous float and integer)

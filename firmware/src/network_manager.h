@@ -25,6 +25,9 @@ public:
     // Manual triggers
     bool pollNow(SurfPayload& outPayload);
     void scanNetworks();
+    void setPollingEnabled(bool enabled) { _pollingEnabled = enabled; }
+    bool isPollingEnabled() const { return _pollingEnabled; }
+
 
     // Configuration & NVS Persistence
     void setWifiCredentials(const String& ssid, const String& password);
@@ -46,6 +49,7 @@ private:
     unsigned long _lastPollTime;
     unsigned long _lastWifiCheck;
     SurfUpdateCallback _onUpdate;
+    bool _pollingEnabled;
 
     void loadPreferences();
     void connectWifi();

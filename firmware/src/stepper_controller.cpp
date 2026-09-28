@@ -1,3 +1,4 @@
+#include <Preferences.h>
 #include "stepper_controller.h"
 
 StepperController::StepperController(HallSensor& hall)
@@ -18,12 +19,36 @@ StepperController::StepperController(HallSensor& hall)
 {}
 
 void StepperController::begin() {
+    pinMode(PIN_MOTOR_IN1, OUTPUT);
+    pinMode(PIN_MOTOR_IN2, OUTPUT);
+    pinMode(PIN_MOTOR_IN3, OUTPUT);
+    pinMode(PIN_MOTOR_IN4, OUTPUT);
     _stepper.setMaxSpeed(MOTOR_MAX_SPEED);
     _stepper.setAcceleration(MOTOR_ACCELERATION);
-    _stepper.setCurrentPosition(0);
+    loadPositionFromNvs();
     _isHomed = true;
-    _currentBeachPos = 1;
     disableCoils();
+}
+
+void StepperController::loadPositionFromNvs() {
+    Preferences prefs;
+    prefs.begin("surf_step", false);
+    long savedStep = prefs.getLong("beach_step", 0);
+    int savedPos = prefs.getInt("beach_pos", 1);
+    prefs.end();
+
+    _stepper.setCurrentPosition(savedStep);
+    _currentBeachPos = savedPos;
+    Serial.printf("[MOTOR] Restored from NVS: Step %ld (Pos %d)\n", savedStep, savedPos);
+}
+
+void StepperController::savePositionToNvs() {
+    Preferences prefs;
+    prefs.begin("surf_step", false);
+    prefs.putLong("beach_step", _stepper.currentPosition());
+    prefs.putInt("beach_pos", _currentBeachPos);
+    prefs.end();
+    Serial.printf("[MOTOR] Persisted to NVS: Step %ld (Pos %d)\n", _stepper.currentPosition(), _currentBeachPos);
 }
 
 void StepperController::zeroDatum() {
@@ -33,7 +58,8 @@ void StepperController::zeroDatum() {
     _currentBeachPos = 1;
     _homingState = HOMING_STATE_DONE;
     _stationaryStartTime = millis();
-    Serial.println("[MOTOR] Current position locked as 12 o'clock datum (Step 0)!");
+    savePositionToNvs();
+    Serial.println("[MOTOR] Current position locked as 12 o'clock datum (Step 0) & saved to NVS!");
 }
 
 void StepperController::enableCoils() {
@@ -113,17 +139,15 @@ bool StepperController::setBeachPosition(int pos) {
     switch (pos) {
         case 1:
         case 12:
-            angle = 0.0f; name = "Long Reef"; break;
+            angle = 0.0f; name = "Long Reef"; break;        // Step 0 (12:00 datum)
         case 2:
-            angle = 60.0f; name = "Dee Why"; break;
+            angle = 63.1f; name = "Dee Why"; break;         // Step 359
         case 3:
-            angle = 120.0f; name = "Curl Curl"; break;
+            angle = 119.0f; name = "Curl Curl"; break;      // Step 677
         case 4:
-            angle = 240.0f; name = "Freshie"; break;
+            angle = 236.4f; name = "Freshie"; break;        // Step 1345
         case 5:
-            angle = 300.0f; name = "Queenscliff"; break;
-        case 6:
-            angle = 180.0f; name = "Conditions (6 o'clock)"; break;
+            angle = 295.7f; name = "Queenscliff"; break;    // Step 1682
         default:
             Serial.printf("[MOTOR] Invalid beach position: %d (use 1:LongReef, 2:DeeWhy, 3:CurlCurl, 4:Freshie, 5:Queenscliff)\n", pos);
             return false;
@@ -248,6 +272,7 @@ void StepperController::update() {
             if (_stationaryStartTime == 0) {
                 _stationaryStartTime = millis();
             } else if (millis() - _stationaryStartTime > COIL_POWERDOWN_DELAY) {
+                savePositionToNvs();
                 disableCoils();
                 _stationaryStartTime = 0;
             }

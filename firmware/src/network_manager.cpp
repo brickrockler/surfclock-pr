@@ -3,7 +3,8 @@
 NetworkManager::NetworkManager()
     : _lastPollTime(0),
       _lastWifiCheck(0),
-      _onUpdate(nullptr)
+      _onUpdate(nullptr),
+      _pollingEnabled(true)
 {}
 
 void NetworkManager::begin() {
@@ -149,7 +150,7 @@ void NetworkManager::update() {
     }
 
     // 2. Periodic API Poll (every POLL_INTERVAL_MS)
-    if (isConnected() && (now - _lastPollTime >= POLL_INTERVAL_MS || _lastPollTime == 0)) {
+    if (_pollingEnabled && isConnected() && (now - _lastPollTime >= POLL_INTERVAL_MS || _lastPollTime == 0)) {
         SurfPayload payload;
         pollNow(payload);
     }

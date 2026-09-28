@@ -6,20 +6,34 @@ This document details the complete electrical connections, pinouts, and assembly
 
 ## 1. Pin Interface Mapping
 
+### Motor 1: Main Break Pointer (Full 360° Dial)
 | Component | Pin / Terminal | ESP32-S3 Pin | Function / Description |
 | :--- | :--- | :--- | :--- |
-| **ULN2003 Driver** | **IN1** | **GPIO 4** | Stepper Coil Phase A (Blue) |
-| **ULN2003 Driver** | **IN2** | **GPIO 5** | Stepper Coil Phase B (Pink) |
-| **ULN2003 Driver** | **IN3** | **GPIO 6** | Stepper Coil Phase C (Yellow) |
-| **ULN2003 Driver** | **IN4** | **GPIO 7** | Stepper Coil Phase D (Orange) |
-| **ULN2003 Driver** | **+ (VCC)** | **5V / VBUS** | 5V DC Motor Power Rail |
-| **ULN2003 Driver** | **- (GND)** | **GND** | System Ground (Common) |
-| **HW-477 Hall Sensor**| **OUT / S** | **GPIO 10** | Datum Trigger (`INPUT_PULLUP`, Active LOW) |
-| **HW-477 Hall Sensor**| **+ (VCC)** | **3.3V** | Sensor Logic Power |
-| **HW-477 Hall Sensor**| **- (GND)** | **GND** | Sensor Ground |
+| **ULN2003 Driver 1** | **IN1** | **GPIO 4** | Stepper Coil Phase A (Blue) |
+| **ULN2003 Driver 1** | **IN2** | **GPIO 5** | Stepper Coil Phase B (Pink) |
+| **ULN2003 Driver 1** | **IN3** | **GPIO 6** | Stepper Coil Phase C (Yellow) |
+| **ULN2003 Driver 1** | **IN4** | **GPIO 7** | Stepper Coil Phase D (Orange) |
+| **ULN2003 Driver 1** | **+ (VCC)** | **5V / VBUS** | 5V DC Motor Power Rail |
+| **ULN2003 Driver 1** | **- (GND)** | **GND** | System Ground (Common) |
 
----
+### Motor 2: Conditions Gauge Needle (180° Subdial)
+| Component | Pin / Terminal | ESP32-S3 Pin | Function / Description |
+| :--- | :--- | :--- | :--- |
+| **ULN2003 Driver 2** | **IN1** | **GPIO 11** | Stepper Coil Phase A (Blue) |
+| **ULN2003 Driver 2** | **IN2** | **GPIO 12** | Stepper Coil Phase B (Pink) |
+| **ULN2003 Driver 2** | **IN3** | **GPIO 13** | Stepper Coil Phase C (Yellow) |
+| **ULN2003 Driver 2** | **IN4** | **GPIO 14** | Stepper Coil Phase D (Orange) |
+| **ULN2003 Driver 2** | **+ (VCC)** | **5V / VBUS** | 5V DC Motor Power Rail |
+| **ULN2003 Driver 2** | **- (GND)** | **GND** | System Ground (Common) |
 
+### Optional Calibrations (Not Required)
+*Note: Physical sensors are **optional**. The firmware saves step positions directly to non-volatile flash (NVS). You can manually align the pointers once and lock step 0 via serial CLI (`zero` / `zero2`).*
+| Optional Component | Pin / Terminal | ESP32-S3 Pin | Function / Description |
+| :--- | :--- | :--- | :--- |
+| **Break Hall Sensor** (Optional) | **OUT / S** | **GPIO 10** | Datum Trigger (`INPUT_PULLUP`, Active LOW) |
+| **Break Hall Sensor** (Optional) | **VCC / GND** | **3.3V / GND** | Sensor Power Rail |
+| **Gauge Hall Sensor** (Optional) | **OUT / S** | **GPIO 15** | Datum Trigger (`INPUT_PULLUP`, Active LOW) |
+| **Gauge Hall Sensor** (Optional) | **VCC / GND** | **3.3V / GND** | Sensor Power Rail |
 ## 2. Power Distribution Architecture
 
 ```
