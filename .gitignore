@@ -1,35 +1,25 @@
-# Python
+# macOS & OS files
+.DS_Store
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-venv/
-.venv/
-env/
-*.egg-info/
-dist/
-build/
-
-# PlatformIO
-firmware/.pio/
+*.pyc
 .pio/
 .vscode/
-
-# Cloudflare / Node
 node_modules/
 .wrangler/
-cloudflare-worker/.wrangler/
-*.log
-npm-debug.log*
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-._*
-.Spotlight-V100
-.Trashes
-
-# Secrets & Local Env
+.firebase/
 .env
-.env.*
+
+# Ignore local Blender working files, temporary renders, and scratch scripts in root
+/*
+!/README.md
+!/.gitignore
+!/.github/
+!/firebase.json
+!/.firebaserc
+!/firmware/
+!/cloudflare-worker/
+!/server/
+!/docs/
+!/cad/
+!/stl/
+!/web_customizer/

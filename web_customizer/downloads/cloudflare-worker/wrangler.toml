@@ -1,0 +1,13 @@
+name = "surfclock"
+main = "src/index.js"
+compatibility_date = "2024-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+workers_dev = true
+
+routes = [
+  { pattern = "surfclock.eggbot.net", custom_domain = true }
+]
+
+[observability]
+enabled = true

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <title>SURF CLOCK — 3D Studio Customizer</title>
+  <link rel="icon" href="./favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css?v=42" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+
+  <!-- TOP HEADER: BOLD SURF CLOCK BRANDING + 2-MODE STUDIO LIGHTING + ACTIONS -->
+  <header class="topbar">
+    <div class="brand-lockup" id="brand-easter-egg" title="Click for a Party Wave Salute!">
+      <span class="brand-dot"></span>
+      <h1 class="brand-title">SURF CLOCK</h1>
+      <span class="brand-tag">SC-01 // OPEN SOURCE 3D STUDIO</span>
+    </div>
+
+    <div class="lighting-bar" role="group" aria-label="Studio Lighting">
+      <button class="light-pill active" data-light="daylight">
+        <span class="light-icon">☀</span> Daylight
+      </button>
+      <button class="light-pill" data-light="nightlight">
+        <span class="light-icon">☾</span> Nightlight
+      </button>
+    </div>
+
+    <div class="topbar-actions">
+      <a href="https://github.com/raphdixon/surfclock" target="_blank" rel="noopener" class="ghost-link">
+        GitHub ↗
+      </a>
+      <button id="btn-top-download" class="top-cta-btn">
+        Download Files
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE: LEFT 3D VIEWPORT + RIGHT NIKE-ID STYLE CUSTOMIZER -->
+  <main class="workspace">
+
+    <!-- 3D INTERACTIVE STAGE -->
+    <section class="viewport-stage" id="viewport-stage">
+
+      <!-- Three.js / High-Res 3D Canvas -->
+      <canvas id="studio-canvas" class="studio-canvas"></canvas>
+
+      <!-- Floating Live Surf & Hero Swell Size Badge (Top-Left) -->
+      <div class="stage-status-pill" id="stage-status-pill">
+        <canvas id="hud-wave-canvas" width="68" height="34" class="hud-wave-canvas" title="Click to pulse the 3D ocean swell"></canvas>
+        <div class="status-text-block">
+          <div class="status-location" id="hud-region-title">SYDNEY NORTHERN BEACHES</div>
+          <div class="status-swell" id="hud-swell-summary">★ BEST NOW: DEE WHY</div>
+        </div>
+        <div class="hud-divider" aria-hidden="true"></div>
+        <div class="hud-swell-hero" id="hud-swell-hero-card" title="Live Swell Height, Period & Direction">
+          <span class="swell-hero-kicker">SWELL SIZE</span>
+          <div class="swell-hero-main">
+            <span class="swell-hero-m" id="hud-swell-size">1.9m</span>
+            <span class="swell-hero-ft" id="hud-swell-feet">(6.2ft)</span>
+          </div>
+          <span class="swell-hero-sub" id="hud-swell-period">13s · SSE</span>
+        </div>
+        <button id="btn-live-demo" class="status-play-btn" title="Animate hands across all 5 beaches">
+          <span class="play-dot"></span> Test Sweep
+        </button>
+        <button id="btn-mobile-search-trigger" class="mobile-pill-search-btn" type="button" aria-label="Set beach location">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          <span>Set Location</span>
+        </button>
+      </div>
+
+      <!-- Whisper-Quiet Architectural Live Swell Scale Datum on the Left Studio Horizon -->
+      <div class="swell-scale-datum" id="swell-scale-datum" title="The background horizon wave is scaled in real time to the live ocean swell height at the active break">
+        <div class="datum-caliper">
+          <span class="datum-tick datum-tick-top"></span>
+          <span class="datum-line" id="datum-caliper-line"></span>
+          <span class="datum-tick datum-tick-bot"></span>
+        </div>
+        <div class="datum-meta">
+          <span class="datum-val" id="datum-swell-val">2.0m (6.6ft)</span>
+          <span class="datum-label" id="datum-swell-sub">CAD FLOOR SWELL · 13s SSE</span>
+        </div>
+      </div>
+
+      <!-- Interactive Easter Egg Toast Notification (Top-Center) -->
+      <div id="stage-toast-pill" class="stage-toast-pill hidden" role="status" aria-live="polite">
+        <span id="stage-toast-text">🤙 Party Wave!</span>
+      </div>
+
+      <!-- Unmistakable Centered Main-Screen Loading Overlay when resolving 5 beaches -->
+      <div id="viewport-loading-overlay" class="viewport-loading-overlay hidden" role="status" aria-live="assertive">
+        <div class="loading-modal-card">
+          <div class="loading-sonar-wrap">
+            <span class="sonar-ring sonar-ring-1"></span>
+            <span class="sonar-ring sonar-ring-2"></span>
+            <span class="sonar-core"></span>
+          </div>
+          <div class="loading-copy">
+            <div class="loading-kicker" id="loading-overlay-kicker">COASTAL TELEMETRY LOCK</div>
+            <div class="loading-title" id="loading-overlay-title">Loading 5 Best Beaches...</div>
+            <div class="loading-sub" id="loading-overlay-sub">Scanning coastline &amp; live ocean swell height</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Camera View Switcher + Interactive Explode Slider (Bottom-Center) -->
+      <div class="camera-dock-wrap">
+        <div class="camera-dock" role="group" aria-label="Camera Angles and Explode Control">
+          <button class="cam-btn active" data-cam="front">Front</button>
+          <button class="cam-btn" data-cam="macro">Close-Up</button>
+          <button class="cam-btn" data-cam="subdial">Sub-Dial</button>
+          <button class="cam-btn" data-cam="rear">Back</button>
+          <span class="cam-divider" aria-hidden="true"></span>
+          <button class="cam-btn" data-cam="exploded" id="btn-explode">Explode</button>
+          <div class="explode-slider-wrap" title="Drag to explode all 9 internal hardware layers">
+            <input
+              type="range"
+              id="slider-explode"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0"
+              class="explode-slider"
+              aria-label="Explode 3D Layers"
+            />
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT PANEL: CLEAN NIKE-ID STYLE CUSTOMIZER (Pull-Out Drawer on Mobile <= 960px) -->
+    <aside class="customizer-panel" id="customizer-panel" data-active-mdtab="beaches">
+      <!-- MOBILE PULL-OUT DRAWER HANDLE & TAB BAR (Visible on <= 960px) -->
+      <div class="mobile-drawer-bar" id="mobile-drawer-bar">
+        <button type="button" class="mobile-drawer-handle-btn" id="btn-mobile-drawer-toggle" aria-expanded="false">
+          <span class="drawer-grabber-pill"></span>
+          <div class="drawer-collapsed-cta">
+            <span class="drawer-cta-title">
+              <span class="drawer-cta-dot" id="mobile-drawer-accent-dot"></span>
+              Customize Clock
+            </span>
+            <span class="drawer-cta-summary" id="mobile-drawer-summary">Beaches · Colors · 3D STL</span>
+            <span class="drawer-chevron" id="mobile-drawer-chevron">▲</span>
+          </div>
+        </button>
+
+        <div class="mobile-drawer-tabs" role="tablist" aria-label="Customization Sections">
+          <button type="button" class="md-tab active" data-mdtab="beaches">📍 Beaches</button>
+          <button type="button" class="md-tab" data-mdtab="colors">🎨 Colors</button>
+          <button type="button" class="md-tab" data-mdtab="export">⬇ STL &amp; Dial</button>
+          <button type="button" class="md-close-btn" id="btn-mobile-drawer-close" aria-label="Collapse drawer">Done</button>
+        </div>
+      </div>
+
+      <div class="customizer-scroll">
+
+        <!-- 1. LOCATION & 5 BEACHES -->
+        <section class="cust-section" data-drawer-section="beaches">
+          <div class="sec-header">
+            <h2 class="sec-title"><span class="sec-idx">01</span>Your 5 Beaches</h2>
+            <span class="sec-subtitle" id="beaches-status-badge">Type address or pick coast</span>
+          </div>
+
+          <!-- Google Maps-Style Autocomplete Search Box -->
+          <div class="search-container" id="search-container">
+            <div class="search-wrap">
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <input
+                type="text"
+                id="location-search-input"
+                class="search-input"
+                placeholder="Type any address, town, or beach..."
+                autocomplete="off"
+              />
+              <button id="btn-search-clear" class="search-clear-btn hidden" aria-label="Clear search">✕</button>
+            </div>
+            <!-- Live Suggestions Dropdown -->
+            <div id="search-autocomplete-dropdown" class="autocomplete-dropdown hidden" role="listbox"></div>
+          </div>
+
+          <!-- Quick Coastline Pills -->
+          <div id="region-pills-container" class="coast-pills"></div>
+
+          <!-- 5 Editable Beach Rows -->
+          <div id="beaches-list" class="beaches-list"></div>
+        </section>
+
+        <!-- 2. COLORS & FINISH -->
+        <section class="cust-section" data-drawer-section="colors">
+          <div class="sec-header">
+            <h2 class="sec-title"><span class="sec-idx">02</span>Color &amp; Finish</h2>
+            <div class="sec-header-right">
+              <span class="sec-subtitle" id="active-swatch-label">Frame — Warm Alabaster</span>
+              <button id="btn-surprise-color" class="surprise-btn" title="Randomize a curated designer colorway">
+                <span class="dice-icon">🎲</span> Surprise
+              </button>
+            </div>
+          </div>
+
+          <!-- Curated Theme Presets -->
+          <div id="presets-row" class="themes-row"></div>
+
+          <!-- Part Selector Tabs -->
+          <div class="part-tabs" role="tablist">
+            <button class="part-tab active" data-part="bezel">Frame</button>
+            <button class="part-tab" data-part="dial">Dial</button>
+            <button class="part-tab" data-part="inlay">Text</button>
+            <button class="part-tab" data-part="hands">Hands</button>
+            <button class="part-tab" data-part="deck">Core</button>
+          </div>
+
+          <!-- Clean Flat Circular Color Swatches -->
+          <div id="swatch-grid" class="swatch-grid"></div>
+        </section>
+
+        <!-- 3. LOWER SUB-DIAL (DRIVEN AUTOMATICALLY BY LIVE BEACH CONDITIONS) -->
+        <section class="cust-section" data-drawer-section="export">
+          <div class="sec-header">
+            <h2 class="sec-title"><span class="sec-idx">03</span>Lower Sub-Dial</h2>
+            <span class="sec-subtitle live-badge-pill" id="slider-cond-val">LIVE: YEAH (8.8/10)</span>
+          </div>
+
+          <div class="subdial-segmented" id="subdial-mode-pills">
+            <button class="seg-btn active" data-submode="worth_it">Worth It?</button>
+            <button class="seg-btn" data-submode="conditions">1–10 Scale</button>
+            <button class="seg-btn" data-submode="swell">Swell</button>
+          </div>
+
+          <!-- Real-Time Surf Telemetry Readout Card (Replaces Manual Slider) -->
+          <div class="live-telemetry-card" id="live-telemetry-card">
+            <div class="lt-col">
+              <span class="lt-label">ACTIVE BREAK</span>
+              <strong class="lt-val" id="lt-beach-name">DEE WHY</strong>
+            </div>
+            <div class="lt-col">
+              <span class="lt-label">SWELL SIZE</span>
+              <strong class="lt-val lt-accent" id="lt-swell-size">1.9m (6.2ft)</strong>
+            </div>
+            <div class="lt-col">
+              <span class="lt-label">PERIOD &amp; DIR</span>
+              <strong class="lt-val" id="lt-swell-period">13s SSE</strong>
+            </div>
+            <div class="lt-col">
+              <span class="lt-label">SUB-DIAL NEEDLE</span>
+              <strong class="lt-val lt-verdict" id="lt-verdict-text">YEAH (9.4)</strong>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- STICKY BOTTOM CTA BAR -->
+      <footer class="customizer-footer">
+        <button id="btn-order" class="primary-download-btn">
+          <span>Download Open-Source Kit</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </button>
+        <div class="secondary-actions">
+          <button id="btn-quick-export-stl" class="sec-action-btn">
+            Export Custom Dial .STL
+          </button>
+          <button id="btn-quick-export-fw" class="sec-action-btn">
+            Export spots.json
+          </button>
+        </div>
+      </footer>
+    </aside>
+
+  </main>
+
+  <!-- OPEN-SOURCE KIT DOWNLOAD MODAL -->
+  <div id="order-modal-backdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-sheet">
+      <div class="modal-top">
+        <div>
+          <span class="modal-kicker">100% OPEN SOURCE HARDWARE &amp; FIRMWARE</span>
+          <h2 class="modal-heading">Your Custom Surf Clock Package</h2>
+        </div>
+        <button id="btn-modal-close" class="modal-close" aria-label="Close">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Summary Card + Primary Downloads -->
+        <div class="modal-hero-grid">
+          <div class="modal-summary-box" id="modal-summary-card"></div>
+
+          <div class="modal-primary-downloads">
+            <a
+              href="./downloads/SC01_Surf_Clock_Open_Source_Kit.zip"
+              download="SC01_Surf_Clock_Open_Source_Kit.zip"
+              class="modal-zip-btn"
+            >
+              <div>
+                <div class="zip-btn-title">Download Complete Kit (.ZIP)</div>
+                <div class="zip-btn-sub">All 6 STLs · ESP32 Firmware · Cloudflare Worker · Wiring Guide</div>
+              </div>
+              <span class="zip-btn-badge">2.0 MB ↓</span>
+            </a>
+
+            <div class="modal-custom-row">
+              <button id="btn-export-custom-dial-stl" class="custom-gen-btn">
+                <span>Generate Custom Dial .STL</span>
+                <small>3D-printable face with your 5 beaches</small>
+              </button>
+              <button id="btn-download-firmware" class="custom-gen-btn">
+                <span>Download Custom spots.json</span>
+                <small>Pre-filled for your 5 beaches</small>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Clean 3-Column Package Breakdown -->
+        <div class="modal-columns">
+          <!-- Column 1: 3D Printable STLs -->
+          <div class="modal-col">
+            <h3 class="col-title">3D Print Files (.STL)</h3>
+            <div class="file-links">
+              <a href="./downloads/stl/01_outer_bezel_chassis.stl" download class="file-link">
+                <span>01 Outer Frame Chassis</span>
+                <span class="dl-tag">STL ↓</span>
+              </a>
+              <a href="./downloads/stl/02a_dial_faceplate_with_text.stl" download class="file-link">
+                <span>02a Dial Faceplate + Text</span>
+                <span class="dl-tag">STL ↓</span>
+              </a>
+              <a href="./downloads/stl/02b_dial_text_and_arc_only.stl" download class="file-link">
+                <span>02b Multi-Color Text Inlay</span>
+                <span class="dl-tag">STL ↓</span>
+              </a>
+              <a href="./downloads/stl/03_beach_hand_28byj48_capped.stl" download class="file-link">
+                <span>03 Upper Beach Hand</span>
+                <span class="dl-tag">STL ↓</span>
+              </a>
+              <a href="./downloads/stl/04_conditions_hand_28byj48_capped.stl" download class="file-link">
+                <span>04 Lower Conditions Needle</span>
+                <span class="dl-tag">STL ↓</span>
+              </a>
+              <a href="./downloads/stl/05_rear_cover_usb.stl" download class="file-link">
+                <span>05 Rear USB-C Cover</span>
+                <span class="dl-tag">STL ↓</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Column 2: Firmware & Cloud Worker -->
+          <div class="modal-col">
+            <h3 class="col-title">Firmware &amp; Software</h3>
+            <div class="file-links">
+              <a href="https://github.com/raphdixon/surfclock" target="_blank" rel="noopener" class="file-link highlight">
+                <span>github.com/raphdixon/surfclock</span>
+                <span class="dl-tag">REPO ↗</span>
+              </a>
+              <a href="./downloads/firmware/surfclock_firmware_and_worker.zip" download class="file-link">
+                <span>PlatformIO + Worker Bundle</span>
+                <span class="dl-tag">ZIP ↓</span>
+              </a>
+              <a href="./downloads/firmware/src/main.cpp" download="main.cpp" class="file-link">
+                <span>ESP32-S3 Firmware (main.cpp)</span>
+                <span class="dl-tag">CPP ↓</span>
+              </a>
+              <a href="./downloads/cloudflare-worker/worker.js" download="worker.js" class="file-link">
+                <span>Cloudflare Worker (Open-Meteo)</span>
+                <span class="dl-tag">JS ↓</span>
+              </a>
+              <a href="./downloads/docs/WIRING.md" download="WIRING.md" class="file-link">
+                <span>GPIO &amp; Stepper Wiring Guide</span>
+                <span class="dl-tag">MD ↓</span>
+              </a>
+              <button id="btn-download-worker-js" class="file-link-btn">
+                <span>Custom worker.js (Your Beaches)</span>
+                <span class="dl-tag">JS ↓</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Column 3: Parts List (BOM) -->
+          <div class="modal-col">
+            <h3 class="col-title">Parts List (~$24 USD)</h3>
+            <ul class="clean-bom-list">
+              <li>
+                <strong>1× ESP32-S3 DevKitC-1</strong>
+                <span>USB-C Wi-Fi controller</span>
+              </li>
+              <li>
+                <strong>2× 28BYJ-48 (5V) + ULN2003</strong>
+                <span>Upper (GPIO 4–7) &amp; Lower (GPIO 11–14)</span>
+              </li>
+              <li>
+                <strong>8× M3×8mm Bolts</strong>
+                <span>Mounts steppers &amp; rear cover</span>
+              </li>
+              <li>
+                <strong>~220g Matte PLA</strong>
+                <span>No supports required · 0.20mm layers</span>
+              </li>
+            </ul>
+            <button id="btn-download-guide" class="guide-dl-btn">
+              Download Build Instructions (.MD) ↓
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Scripts -->
+  <script type="module" src="./app.js?v=42"></script>
+</body>
+</html>

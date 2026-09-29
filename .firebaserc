@@ -1,0 +1,17 @@
+{
+  "projects": {
+    "default": "ee-gif-machine"
+  },
+  "targets": {
+    "ee-gif-machine": {
+      "hosting": {
+        "surfclock": [
+          "surfclock"
+        ],
+        "studio": [
+          "surf-clock-studio"
+        ]
+      }
+    }
+  }
+}
