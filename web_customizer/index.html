@@ -307,17 +307,17 @@
           <div class="modal-summary-box" id="modal-summary-card"></div>
 
           <div class="modal-primary-downloads">
-            <a
-              href="./downloads/SC01_Surf_Clock_Open_Source_Kit.zip"
-              download="SC01_Surf_Clock_Open_Source_Kit.zip"
+            <button
+              id="btn-download-full-kit"
+              type="button"
               class="modal-zip-btn"
             >
               <div>
-                <div class="zip-btn-title">Download Complete Kit (.ZIP)</div>
-                <div class="zip-btn-sub">All 6 STLs · ESP32 Firmware · Cloudflare Worker · Wiring Guide</div>
+                <div class="zip-btn-title">Download Custom Full-Stack Kit (.ZIP)</div>
+                <div class="zip-btn-sub">Custom 3D Dial STLs · Pre-Configured Firmware · Cloudflare Worker · Wiring Guide</div>
               </div>
-              <span class="zip-btn-badge">2.0 MB ↓</span>
-            </a>
+              <span class="zip-btn-badge" id="full-kit-badge">Full Stack ↓</span>
+            </button>
 
             <div class="modal-custom-row">
               <button id="btn-export-custom-dial-stl" class="custom-gen-btn">
@@ -427,6 +427,7 @@
   </div>
 
   <!-- Application Scripts -->
+  <script src="./vendor/jszip.min.js"></script>
   <script type="module" src="./app.js?v=42"></script>
 </body>
 </html>

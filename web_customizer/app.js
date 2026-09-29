@@ -17,7 +17,7 @@ import {
   searchLocationsAutocomplete,
 } from "./surf_data.js?v=42";
 import { SurfClockStudio3D } from './studio_3d.js?v=42';
-
+import { downloadFullStackCustomKit } from "./package_generator.js?v=42";
 const PART_LABELS = {
   bezel: "Outer Frame",
   dial: "Dial Face",
@@ -242,6 +242,8 @@ class SurfClockConfiguratorApp {
       btnDownloadFirmware: document.getElementById("btn-download-firmware"),
       btnDownloadWorkerJs: document.getElementById("btn-download-worker-js"),
       btnDownloadGuide: document.getElementById("btn-download-guide"),
+      btnDownloadFullKit: document.getElementById("btn-download-full-kit"),
+      fullKitBadge: document.getElementById("full-kit-badge"),
     };
   }
 
@@ -1180,6 +1182,9 @@ class SurfClockConfiguratorApp {
     this.dom.btnDownloadFirmware.addEventListener("click", () => this.downloadSpotsJson());
     this.dom.btnDownloadWorkerJs.addEventListener("click", () => this.downloadCustomWorkerJs());
     this.dom.btnDownloadGuide.addEventListener("click", () => this.downloadBuildGuideMarkdown());
+    if (this.dom.btnDownloadFullKit) {
+      this.dom.btnDownloadFullKit.addEventListener("click", () => this.handleDownloadFullKit());
+    }
   }
 
   toggleLiveDemo() {
@@ -1216,6 +1221,36 @@ class SurfClockConfiguratorApp {
     `;
     this.dom.modalBackdrop.classList.remove("hidden");
   }
+  async handleDownloadFullKit() {
+    const badge = this.dom.fullKitBadge;
+    const origBadge = badge ? badge.textContent : "Full Stack ↓";
+    if (badge) badge.textContent = "⏳ Building...";
+    this.showToast("📦 Packaging Custom 3D Dial + Hardcoded ESP32 Firmware...");
+
+    try {
+      const filename = await downloadFullStackCustomKit({
+        state: this.state,
+        studio: this.studio,
+        onProgress: (msg, pct) => {
+          if (badge) badge.textContent = `${pct}% ↓`;
+          console.log(`[FullStackKit] ${pct}% - ${msg}`);
+        }
+      });
+      this.showToast(`✅ Downloaded ${filename}!`);
+    } catch (err) {
+      console.error("[FullStackKit] Error:", err);
+      this.showToast("⚠️ Falling back to base package...");
+      const a = document.createElement("a");
+      a.href = "./downloads/SC01_Surf_Clock_Open_Source_Kit.zip";
+      a.download = "SC01_Surf_Clock_Open_Source_Kit.zip";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => document.body.removeChild(a), 200);
+    } finally {
+      if (badge) badge.textContent = origBadge;
+    }
+  }
+
 
   downloadSpotsJson() {
     const spotsObj = {};

@@ -991,7 +991,12 @@ html, body {
   text-decoration: none;
   padding: 18px 22px;
   border-radius: 16px;
-  transition: background 0.15s ease;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
 .modal-zip-btn:hover {

@@ -1664,6 +1664,32 @@ export class SurfClockStudio3D {
   }
 
   /**
+   * Generates and returns the raw ArrayBuffer for the custom binary STL
+   * without triggering a direct browser download. Used for full-stack ZIP packaging.
+   * @param {boolean} includeBasePlate - true = baseplate + text; false = typography inlay only
+   * @param {string} regionCode - Region code identifier
+   * @returns {ArrayBuffer}
+   */
+  generateCustomDialSTLBuffer(includeBasePlate = true, regionCode = "CUSTOM") {
+    const cleanCode = (regionCode || "CUSTOM").replace(/[^A-Za-z0-9_-]/g, "_").toUpperCase();
+    const typoGeo = buildDialTypographyGeometry(THREE, this.beachNames, this.subdialMode, true);
+    const geoms = [];
+    if (includeBasePlate) {
+      geoms.push(buildPureDialFaceplateGeometry(THREE, true));
+    }
+    geoms.push(typoGeo);
+
+    const stlBuffer = buildBinarySTLFromGeometries(
+      geoms,
+      `SC01_${cleanCode}_${this.beachNames.join("_")}`,
+      includeBasePlate ? 7.0 : 4.6
+    );
+
+    for (const g of geoms) { if (g && g.dispose) g.dispose(); }
+    return stlBuffer;
+  }
+
+  /**
    * Captures a high-resolution PNG render of the live 3D customizer canvas
    */
   captureStudioSnapshotPNG(filename = "SC01_Custom_Surf_Clock_Render.png") {
