@@ -13,6 +13,8 @@ node_modules/
 /*
 !/README.md
 !/.gitignore
+!/AGENT.md
+!/SURF_CLOCK_001_AXON_EXPLODED_WEB.gif
 !/.github/
 !/firebase.json
 !/.firebaserc

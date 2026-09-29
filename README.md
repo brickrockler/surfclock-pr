@@ -5,7 +5,35 @@ SurfClock solves a simple problem: which beach should you go for a surf at this 
 1. Which of your local beaches has the best conditions?
 2. How good are the conditions?
 
+> 🤖 **Using an AI Coding Agent (Antigravity, Cursor, Claude Code, Windsurf)?**  
+> Don't write code or flash manually! Just point your agent at this repository and tell it:  
+> **`"Read AGENT.md and set up my SurfClock."`**  
+> Your agent will interview you for your local beaches, configure the firmware, deploy the edge API, and help calibrate your clock hands!
 
+---
+
+## 🤖 The Modern Way: Point an AI Agent at It
+
+Let's be real: no one is manually modifying C++ and deploying workers line-by-line anymore. The fastest way to get your SurfClock running is to let an AI agent do it for you.
+
+### Option 1: The 30-Second Web Flow (Easiest)
+1. Go to [surfclock.web.app](https://surfclock.web.app).
+2. Select your coastline or pick your 5 beaches visually on the 3D customizer.
+3. Click **"Download Custom Full-Stack Kit (.ZIP)"**.
+4. Unzip the package, open your AI agent (Antigravity, Cursor, etc.), and say:
+   > *"I downloaded this custom SurfClock kit. Flash it to my ESP32-S3 over USB and help me connect to Wi-Fi."*
+   Everything (3D dial STL, C++ stepper angles, and Cloudflare Worker coordinates) is already hardcoded for your beaches.
+
+### Option 2: The Agent Questionnaire (Direct from GitHub)
+1. Clone this repo: `git clone https://github.com/raphdixon/surfclock.git`.
+2. Plug your ESP32-S3 into your computer with a USB-C cable.
+3. Tell your AI agent:
+   > *"Read `AGENT.md` and set up my SurfClock."*
+4. Your agent will conduct a brief questionnaire:
+   - Which 5 beaches you want on the dial (from 12 o'clock clockwise).
+   - Your local Wi-Fi network SSID and password.
+   - Whether you want to deploy a private Cloudflare Worker or use the public endpoint.
+5. The agent automatically calculates GPS coordinates, facing angles, and offshore wind windows, injects them into `firmware/src/stepper_controller.cpp` and `cloudflare-worker/src/index.js`, builds and uploads the firmware with PlatformIO, and guides hand calibration!
 ---
 
 ## Required Components (Bill of Materials)
@@ -25,6 +53,7 @@ SurfClock solves a simple problem: which beach should you go for a surf at this 
 
 You can generate the 3D print files for the custom face and enclosure here: [https://surfclock.web.app](https://surfclock.web.app)
 
+![SurfClock Exploded Assembly](SURF_CLOCK_001_AXON_EXPLODED_WEB.gif)
 ---
 
 ## Wiring & Pinout
@@ -239,6 +268,52 @@ The scoring engine evaluates real-time buoy and weather telemetry to generate a 
 4. **Wind & Cleanliness (-15 to +25 pts)**: Clean offshore winds groom wave faces (+25 pts); strong onshore winds cause chop and blowout penalties (-15 pts). Light/glassy winds score high neutral.
 
 ---
+## 🎯 Hand Alignment & Calibration Guide
+
+After assembling your 3D-printed clock face and press-fitting the pointer hands onto the motor shafts, you need to align step 0 so the hands point dead-centre at the dial tick marks.
+
+Because the ESP32 firmware features persistent non-volatile storage (NVS), **you only need to calibrate once**.
+
+### Method 1: AI Agent Vision Loop (Antigravity / WebCam) 🤖👁️
+
+If you are using Google Antigravity or a multimodal AI coding assistant with terminal and vision access, you can automate perfect alignment using a camera:
+
+1. **Point a camera at the clock**: Mount a USB webcam facing the clock dial, or take photos with your phone camera.
+2. **Open the serial monitor or grant agent terminal access**: Ensure the agent can send commands to the ESP32 USB serial port at `115200` baud.
+3. **Prompt the AI Agent**:
+   > *"Look at the camera feed of my SurfClock dial. Inspect the alignment of the main break pointer and conditions subdial needle. Send `step <N>` or `step2 <N>` commands to nudge the motors in small increments until the main pointer points dead-centre at 12 o'clock and the subdial needle points at Rating 1.0. Once aligned, send `zero` and `zero2` to save to flash."*
+4. The agent can measure the angular discrepancy from the image, issue relative micro-steps (`step 15`, `step -4`), verify the adjusted position from the next frame, and lock the zero datum into flash memory automatically.
+
+---
+
+### Method 2: Manual Interactive CLI Nudge
+
+You can also calibrate manually in seconds using the interactive serial console:
+
+1. Open the serial monitor:
+   ```bash
+   pio device monitor -b 115200
+   ```
+2. Gently move or step the main pointer near 12 o'clock (Position 1).
+3. Fine-tune alignment using relative step nudges:
+   ```text
+   step 20      # Nudge Motor 1 clockwise 20 steps
+   step -5      # Nudge Motor 1 counter-clockwise 5 steps
+   step2 15     # Nudge Motor 2 (conditions needle) clockwise 15 steps
+   step2 -3     # Nudge Motor 2 counter-clockwise 3 steps
+   ```
+4. Once the needles are centered over 12 o'clock and Rating 1.0:
+   ```text
+   zero         # Locks Motor 1 step 0 (12 o'clock datum)
+   zero2        # Locks Motor 2 step 0 (Rating 1.0 datum)
+   ```
+5. *(Optional)* If your main hand is already pointing at another beach (e.g. Dee Why at Pos 2), you can immediately calibrate it without rotating back to 12:
+   ```text
+   cal_beach 2  # Locks current position as Beach Position 2
+   ```
+
+---
+
 
 ## 📄 License
 
