@@ -106,6 +106,9 @@ void CliHandler::processCommand(const String& line) {
         _stepper.moveRelative(steps);
     } else if (cmd == "zero" || cmd == "zero1" || cmd == "set_break_1") {
         _stepper.zeroDatum();
+    } else if (cmd == "set_beach" || cmd == "cal_beach") {
+        int pos = arg.toInt();
+        _stepper.calibrateCurrentAsBeach(pos);
     } else if (cmd == "step2") {
         long steps = arg.toInt();
         _gauge.moveRelative(steps);

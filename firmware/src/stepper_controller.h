@@ -48,6 +48,7 @@ public:
 
     // Manual datum lock
     void zeroDatum();
+    void calibrateCurrentAsBeach(int pos);
     void savePositionToNvs();
     void loadPositionFromNvs();
 

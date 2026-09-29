@@ -1,26 +1,14 @@
-# 🌊 SurfClock: Ambient Connected Physical Computing Display
+# 🌊 SurfClock
 
-SurfClock transforms a standard wall clock into an ambient, dual-actuator physical surf monitor. Rather than showing time, mechanical pointers dynamically track optimal local surf conditions in real-time, translating multi-factor marine buoy and meteorological telemetry into an instant physical glance.
+SurfClock solves a simple problem: which beach should you go for a surf at this morning? Rather than showing time, mechanical pointers dynamically track optimal local surf conditions in real-time, translating marine buoy and meteorological telemetry into two simple outputs:
 
-```
- [Open-Meteo Marine & Weather APIs] (Swell Height, Period, Direction, Wind Speed/Direction)
-                    │
-                    ▼ (Free, no API key required)
-   [Cloudflare Worker / Edge Pipeline] (Scores breaks & conditions -> /api/surf)
-                    │
-                    ▼ HTTP GET / Wi-Fi (every 60s)
-               [ESP32-S3]
-         ┌──────────┴──────────┐
-         ▼                     ▼
-[Motor 1: Break Pointer]   [Motor 2: Conditions Gauge]
-(Full 360° Dial)           (180° Subdial: 1.0 – 10.0 Rating)
-```
+1. Which of your local beaches has the best conditions?
+2. How good are the conditions?
+
 
 ---
 
-## 🛠 Required Components (Bill of Materials)
-
-You do **not** need optical, physical, or magnetic sensors to build SurfClock. The firmware features persistent non-volatile flash storage (NVS) that remembers step counts across power cycles and reboots. Calibration is performed once during initial setup using simple CLI commands.
+## Required Components (Bill of Materials)
 
 | Component | Quantity | Description | Approximate Cost |
 | :--- | :---: | :--- | :--- |
@@ -29,15 +17,17 @@ You do **not** need optical, physical, or magnetic sensors to build SurfClock. T
 | **ULN2003 Driver Boards** | 2 | Darlington transistor array stepper driver boards (typically bundled with 28BYJ-48 motors). | Bundled with motors |
 | **5V USB Power Supply** | 1 | Standard 5V / 1A–2A USB wall brick and USB-C cable (powers the ESP32 and both stepper motors). | Common household item |
 | **DuPont Jumper Wires** | 12–16 | Female-to-female jumper wires to connect the ESP32 GPIOs and 5V/GND power rails to the ULN2003 boards. | ~$2 |
-| **Wall Clock Enclosure & Hands** | 1 | Any analog wall clock frame/case with the quartz movement removed. Pointer hands can be 3D printed, laser cut, or press-fit onto the motor shafts. | Repurposed or ~$10 |
-
-> [!TIP]
-> **Why No Sensors?**
-> Physical Hall-effect sensors or limit switches are completely optional. The firmware saves the stepper coordinates to ESP32 flash (`Preferences` / NVS) after each movement. During first-time setup, you position the hands to 12 o'clock and rating 1.0, type `zero` and `zero2` into the serial monitor, and the clock stays permanently calibrated.
+| **Wall Clock Enclosure & Hands** | 1 | Pointer hands can be 3D printed, laser cut, or press-fit onto the motor shafts. | Repurposed or ~$10 |
 
 ---
 
-## ⚡ Wiring & Pinout
+## 3D Printing the Enclosure
+
+You can generate the 3D print files for the custom face and enclosure here: [https://surfclock.web.app](https://surfclock.web.app)
+
+---
+
+## Wiring & Pinout
 
 Connect the two ULN2003 stepper driver boards to the ESP32-S3:
 
@@ -65,7 +55,7 @@ Connect the two ULN2003 stepper driver boards to the ESP32-S3:
 
 ---
 
-## 🔌 How to Flash the Firmware
+## How to Flash the Firmware
 
 SurfClock firmware is built with [PlatformIO](https://platformio.org/).
 
@@ -93,7 +83,7 @@ pio device monitor -b 115200
 ### 5. First-Time Setup & Zeroing (No Sensors Needed!)
 Once the serial monitor opens, run these interactive commands:
 
-1. **Configure Wi-Fi** (saved directly to flash, no re-compiling required):
+1. **Configure Wi-Fi** (saved directly to flash):
    ```
    wifi "Your-SSID" "Your-Password"
    ```
@@ -115,9 +105,9 @@ Once the serial monitor opens, run these interactive commands:
 
 ---
 
-## 🏄 How to Add Your Own Beaches
+## How to Add Your Own Beaches
 
-SurfClock uses the **Open-Meteo Marine & Weather API**—it is **100% free**, requires **no API key**, and covers ocean coordinates globally.
+SurfClock uses the **Open-Meteo Marine & Weather API**—it is 100% free, requires no API key, and covers ocean coordinates globally.
 
 You can configure SurfClock for your local coastline in two places:
 1. **The Backend Scoring Engine** (`cloudflare-worker/src/index.js` or `server/spots.json`): defines the geographic coordinates and oceanographic preferences for each spot.
@@ -216,7 +206,7 @@ This runs the scoring engine at `http://<your-local-ip>:8000/api/surf`.
 
 ---
 
-## 💻 Serial CLI Command Reference
+## Serial CLI Command Reference
 
 Connect over USB at **115200 baud** to access real-time diagnostics:
 
@@ -230,6 +220,7 @@ Connect over USB at **115200 baud** to access real-time diagnostics:
 | `step2` | `<+/-N>` | Manually nudges Motor 2 forward (+) or backward (-) by $N$ steps. |
 | `zero` | – | Locks Motor 1's current position as 12 o'clock (Step 0) into flash (NVS). |
 | `zero2` | – | Locks Motor 2's current position as Rating 1.0 (Step 0) into flash (NVS). |
+| `cal_beach` | `<1-12>` | Calibrates the current main pointer position as a specific beach position. |
 | `wifi` | `<SSID> <PASS>` | Sets and saves Wi-Fi network credentials directly to flash. |
 | `api` | `<URL>` | Sets and saves custom scoring API endpoint to flash. |
 | `poll` | – | Forces an immediate HTTP GET request to the scoring server. |
@@ -238,7 +229,7 @@ Connect over USB at **115200 baud** to access real-time diagnostics:
 
 ---
 
-## 📐 How Surf Quality is Scored
+## How Surf Quality is Scored
 
 The scoring engine evaluates real-time buoy and weather telemetry to generate a composite quality score from **0 to 100**, mapped to the **1.0 to 10.0** gauge:
 

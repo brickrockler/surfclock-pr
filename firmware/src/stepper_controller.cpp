@@ -61,6 +61,28 @@ void StepperController::zeroDatum() {
     savePositionToNvs();
     Serial.println("[MOTOR] Current position locked as 12 o'clock datum (Step 0) & saved to NVS!");
 }
+void StepperController::calibrateCurrentAsBeach(int pos) {
+    long step = 0;
+    const char* name = "Long Reef";
+    switch (pos) {
+        case 1:
+        case 12: step = 0; name = "Long Reef"; break;
+        case 2:  step = 359; name = "Dee Why"; break;
+        case 3:  step = 677; name = "Curl Curl"; break;
+        case 4:  step = 1345; name = "Freshie"; break;
+        case 5:  step = 1682; name = "Queenscliff"; break;
+        default:
+            Serial.printf("[MOTOR] Invalid beach pos for calibration: %d\n", pos);
+            return;
+    }
+    _stepper.stop();
+    _stepper.setCurrentPosition(step);
+    _currentBeachPos = pos;
+    _isHomed = true;
+    savePositionToNvs();
+    Serial.printf("[MOTOR] 🎯 Current physical position calibrated as %s (Pos %d, Step %ld) & saved to NVS!\n",
+                  name, pos, step);
+}
 
 void StepperController::enableCoils() {
     if (!_coilsEnergized) {
